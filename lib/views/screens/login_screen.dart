@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/firebase_auth_service.dart';
 import '../widgets/TextFieldUi.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuthService _authService = FirebaseAuthService();
 
   bool _obscurePassword = true;
 
@@ -23,20 +25,29 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      String email = _emailController.text.trim();
-      String password = _passwordController.text.trim();
+  Future<void> _login() async {
+  if (_formKey.currentState!.validate()) {
+    try {
+      final user = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      // 🔐 Ici tu mettras ton code Firebase ou API
-      debugPrint("Email: $email");
-      debugPrint("Password: $password");
+      if (user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Connexion réussie")),
+        );
 
+        // Navigation vers Home
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connexion réussie (simulation)")),
+        SnackBar(content: Text(e.toString())),
       );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

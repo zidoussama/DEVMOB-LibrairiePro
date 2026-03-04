@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "../widgets/TextFieldUi.dart";
+import '../../services/firebase_auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,7 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-
+  final _formKey = GlobalKey<FormState>();
+  final FirebaseAuthService _authService = FirebaseAuthService();
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -26,6 +28,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+  Future<void> _handleRegister() async {
+  if (_formKey.currentState!.validate()) {
+    try {
+      final user = await _authService.register(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+      );
+
+      if (user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Inscription réussie")),
+        );
+
+        // Navigation vers Home
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,26 +61,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFFF5F5F0),
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
+          child:Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Flèche retour
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFF5D4037),
-                      size: 24,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
 
                 // Logo Icône
                 Container(
@@ -89,7 +102,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Colors.grey[600],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 30),
 
                 // Carte d'inscription
                 Container(
@@ -108,14 +121,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Champs Prénom et Nom côte à côte
                       Row(
                         children: [
                           Expanded(
                             child: TextFieldUI(
                               controller: _firstNameController,
                               label: "Prénom",
-                              hint: "Jean",
+                              hint: "votre prénom",
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -123,12 +135,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: TextFieldUI(
                               controller: _lastNameController,
                               label: "Nom",
-                              hint: "Dupont",
+                              hint: "votre nom",
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Champ Email
                       TextFieldUI(
@@ -137,7 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hint: "votre@email.com",
                         keyboardType: TextInputType.emailAddress,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Champ Mot de passe
                       TextFieldUI(
@@ -161,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Champ Confirmer le mot de passe
                       TextFieldUI(
@@ -185,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
                       // Bouton Créer un compte
                       SizedBox(
@@ -215,7 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 10),
 
                 // Lien se connecter
                 Row(

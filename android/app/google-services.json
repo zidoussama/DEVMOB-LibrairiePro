@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "620694659185",
+    "project_id": "librairiepro-7bc39",
+    "storage_bucket": "librairiepro-7bc39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:620694659185:android:5d1e0b970654238258bbd0",
+        "android_client_info": {
+          "package_name": "com.example.librairiepro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPOZQcAvkInUMXIpm0KT30S2Pf5bVU518"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
