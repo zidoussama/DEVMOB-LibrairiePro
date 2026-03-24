@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/firebase_auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/TextFieldUi.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,7 +15,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FirebaseAuthService _authService = FirebaseAuthService();
 
   bool _obscurePassword = true;
 
@@ -26,31 +26,224 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      final user = await _authService.signIn(
+    final form = _formKey.currentState;
+    if (form == null) return;
+
+    if (form.validate()) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      final success = await authProvider.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      if (user != null) {
+      if (!mounted) return;
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Connexion réussie")),
         );
-
-        // Navigation vers Home
         Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authProvider.errorMessage ?? "Erreur")),
+        );
       }
-    } catch (e) {
+    }
+  }
+
+  Future<void> _showResetPasswordDialog() async {
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    final dialogKey = GlobalKey<FormState>();
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        bool isSubmitting = false;
+
+        Future<void> submit(StateSetter setStateDialog) async {
+          if (isSubmitting) return;
+
+          final valid = dialogKey.currentState?.validate() ?? false;
+          if (!valid) return;
+
+          setStateDialog(() => isSubmitting = true);
+
+          // Close keyboard first (important on Android)
+          FocusScope.of(dialogContext).unfocus();
+
+          bool ok = false;
+          try {
+            ok = await dialogContext.read<AuthProvider>().resetPassword(
+                  email: emailCtrl.text.trim(),
+                );
+          } catch (_) {
+            ok = false;
+          }
+
+          // Close dialog safely
+          if (Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop(ok);
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (dialogContext, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Form(
+                  key: dialogKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Mot de passe oublié ?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF5D4037),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Entrez votre email pour recevoir un lien de réinitialisation.",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: "votre@email.com",
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: Color(0xFF8D6E63),
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F0),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Colors.black12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Colors.black12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: Colors.black26),
+                          ),
+                        ),
+                        validator: (v) {
+                          final value = (v ?? "").trim();
+                          if (value.isEmpty) return "Email requis";
+                          if (!value.contains("@")) return "Email invalide";
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () {
+                                      FocusScope.of(dialogContext).unfocus();
+                                      Navigator.of(dialogContext).pop(false);
+                                    },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF6D4C41),
+                                side: const BorderSide(
+                                  color: Color(0xFF6D4C41),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Annuler",
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () => submit(setStateDialog),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6D4C41),
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Envoyer",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    emailCtrl.dispose();
+
+    if (!mounted) return;
+
+    if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        const SnackBar(
+          content: Text("Email de réinitialisation envoyé."),
+        ),
       );
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
       body: SafeArea(
@@ -129,7 +322,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: "Mot de passe",
                           hint: "••••••••",
                           obscureText: _obscurePassword,
-                          
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -150,12 +342,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
-                            child: Text(
+                            onPressed: _showResetPasswordDialog,
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF8D6E63),
+                            ),
+                            child: const Text(
                               "Mot de passe oublié ?",
                               style: TextStyle(
-                                color: Colors.grey[600],
                                 fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -167,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
-                            onPressed: _login,
+                            onPressed: authProvider.isLoading ? null : _login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6D4C41),
                               foregroundColor: Colors.white,
@@ -176,13 +371,22 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               elevation: 3,
                             ),
-                            child: const Text(
-                              "Se connecter",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            child: authProvider.isLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Se connecter",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
@@ -206,11 +410,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.pushNamed(context, '/register');
                       },
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF6D4C41),
+                      ),
                       child: const Text(
                         "Créer un compte",
                         style: TextStyle(
-                          color: Color(0xFF6D4C41),
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
                       ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import '../config/routes.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'Config/routes.dart';
+import '../../Config/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,15 +16,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'LibrairiePro',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF6B4F3B),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'LibrairiePro',
+        theme: ThemeData(
+          primaryColor: AppColors.primary,
+          useMaterial3: true,
+        ),
+        initialRoute: AppRoutes.initialRoute,
+        routes: AppRoutes.getRoutes(),
       ),
-      initialRoute: AppRoutes.initialRoute,
-      routes: AppRoutes.getRoutes(),
     );
   }
 }
