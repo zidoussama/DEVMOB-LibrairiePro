@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/product_card.dart';
 import '../../Config/app_colors.dart';
 
@@ -11,7 +10,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _navIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -131,10 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // Bottom nav like screenshot
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
-      ),
     );
   }
 }

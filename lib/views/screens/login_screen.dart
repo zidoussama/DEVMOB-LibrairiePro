@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../Config/routes.dart';
 import '../../providers/auth_provider.dart';
 import '../widgets/TextFieldUi.dart';
 
@@ -29,12 +30,32 @@ class _LoginScreenState extends State<LoginScreen> {
     final form = _formKey.currentState;
     if (form == null) return;
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez saisir un email valide")),
+      );
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez saisir votre mot de passe")),
+      );
+      return;
+    }
+
     if (form.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoading) return;
+
+      FocusScope.of(context).unfocus();
 
       final success = await authProvider.signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
       if (!mounted) return;
@@ -43,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Connexion réussie")),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, AppRoutes.main);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(authProvider.errorMessage ?? "Erreur")),
@@ -237,6 +258,11 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text("Email de réinitialisation envoyé."),
         ),
       );
+    } else if (result == false) {
+      final errorMessage = context.read<AuthProvider>().errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage ?? "Impossible d'envoyer l'email")),
+      );
     }
   }
 
@@ -408,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        Navigator.pushNamed(context, AppRoutes.register);
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF6D4C41),
