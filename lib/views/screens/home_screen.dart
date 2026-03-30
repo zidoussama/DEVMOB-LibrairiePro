@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../Models/product.dart';
+import '../../providers/produit_provider.dart';
 import '../widgets/product_card.dart';
 import '../../Config/app_colors.dart';
 
@@ -10,6 +13,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProduitProvider>().listenProduits();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,31 +107,76 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Products horizontal list
-              SizedBox(
-                height: 290,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 6,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
-                  itemBuilder: (context, index) {
-                    final isFirst = index == 0;
-                    return ProductCard(
-                      title: isFirst
-                          ? "Collectif\nMathématiques\n1ère Terminale"
-                          : "Kit de Géométrie",
-                      imageUrl: "", // add your url later
-                      price: isFirst ? 32.50 : 8.99,
-                      rating: 4,
-                      reviewCount: isFirst ? 89 : 156,
-                      badgeText: "Nouveau",
-                      isFavorite: false,
-                      onTap: () {},
-                      onFavoriteTap: () {},
-                      onAddToCartTap: () {},
+              Consumer<ProduitProvider>(
+                builder: (context, produitProvider, _) {
+                  if (produitProvider.isLoading) {
+                    return const SizedBox(
+                      height: 290,
+                      child: Center(child: CircularProgressIndicator()),
                     );
-                  },
-                ),
+                  }
+
+                  if (produitProvider.error != null) {
+                    return SizedBox(
+                      height: 290,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'Erreur lors du chargement des produits:\n${produitProvider.error}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final List<ProduitModel> produits = produitProvider.produits;
+                  if (produits.isEmpty) {
+                    return const SizedBox(
+                      height: 290,
+                      child: Center(
+                        child: Text(
+                          'Aucun produit disponible pour le moment.',
+                          style: TextStyle(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 290,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: produits.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                      itemBuilder: (context, index) {
+                        final produit = produits[index];
+                        final imageUrl =
+                            produit.images.isNotEmpty ? produit.images.first : '';
+                        final price =
+                            produit.prixPromo > 0 ? produit.prixPromo : produit.prix;
+
+                        return ProductCard(
+                          title: produit.titre,
+                          imageUrl: imageUrl,
+                          price: price,
+                          rating: 4,
+                          reviewCount: 0,
+                          badgeText: produit.stock > 0 ? 'Nouveau' : 'Rupture',
+                          isFavorite: false,
+                          onTap: () {},
+                          onFavoriteTap: () {},
+                          onAddToCartTap: () {},
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ),
