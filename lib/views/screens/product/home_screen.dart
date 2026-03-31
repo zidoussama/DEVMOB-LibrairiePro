@@ -6,6 +6,7 @@ import '../../widgets/home/home_header.dart';
 import '../../widgets/home/home_products_section.dart';
 import '../../widgets/home/home_promo_banner.dart';
 import '../../widgets/home/home_search_bar.dart';
+import '../../widgets/home/home_sold_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,6 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 18),
 
               const HomePromoBanner(),
+              const SizedBox(height: 22),
+
+              HomeSoldSection(onSeeAllTap: () {}),
               const SizedBox(height: 22),
 
               HomeProductsSection(onSeeAllTap: () {}),

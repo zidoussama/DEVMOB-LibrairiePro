@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import 'product/home_screen.dart';
 import 'shoppingcart.dart';
+import 'favorite/favo_screen.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -17,7 +18,7 @@ class _MainPageState extends State<MainPage> {
     HomeScreen(),
     Center(child: Text("Recherche")),
     ShoppingCartPage(),
-    Center(child: Text("Favoris")),
+    FavoScreen(),
     Center(child: Text("Compte")),
   ];
 

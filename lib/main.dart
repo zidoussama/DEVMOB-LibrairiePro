@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/Like_Provider.dart';
 import 'providers/produit_provider.dart';
 import 'Config/routes.dart';
 import '../../Config/app_colors.dart';
@@ -21,14 +22,12 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProduitProvider()),
+        ChangeNotifierProvider(create: (_) => LikeProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'LibrairiePro',
-        theme: ThemeData(
-          primaryColor: AppColors.primary,
-          useMaterial3: true,
-        ),
+        theme: ThemeData(primaryColor: AppColors.primary, useMaterial3: true),
         initialRoute: AppRoutes.initialRoute,
         routes: AppRoutes.getRoutes(),
       ),

@@ -6,6 +6,8 @@ class ProductCard extends StatelessWidget {
   final String imageUrl; // can be network url; if empty -> placeholder
   final double? width;
   final double price;
+  final double? oldPrice;
+  final double rating;
   final int reviewCount;
 
   final String? badgeText; // e.g. "Nouveau"
@@ -21,6 +23,8 @@ class ProductCard extends StatelessWidget {
     required this.imageUrl,
     this.width,
     required this.price,
+    this.oldPrice,
+    this.rating = 0,
     this.reviewCount = 0,
     this.badgeText,
     this.isFavorite = false,
@@ -140,15 +144,34 @@ class ProductCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            '${price.toStringAsFixed(2)} €',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.text,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (oldPrice != null)
+                                Text(
+                                  '${oldPrice!.toStringAsFixed(2)} €',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              Text(
+                                '${price.toStringAsFixed(2)} €',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: oldPrice != null
+                                      ? Colors.redAccent
+                                      : AppColors.text,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -238,7 +261,10 @@ class _ProductImageState extends State<_ProductImage> {
 
     final withoutQuery = lower.split('?').first;
     if (withoutQuery.endsWith('.jpgg')) {
-      final fixed = encoded.replaceFirst(RegExp(r'\.jpgg(?=\?|$)', caseSensitive: false), '.jpg');
+      final fixed = encoded.replaceFirst(
+        RegExp(r'\.jpgg(?=\?|$)', caseSensitive: false),
+        '.jpg',
+      );
       return [encoded, fixed];
     }
 

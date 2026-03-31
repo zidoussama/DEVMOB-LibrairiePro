@@ -11,10 +11,10 @@ import '../../../providers/produit_provider.dart';
 import '../product_card.dart';
 import 'product_tag_utils.dart';
 
-class HomeProductsSection extends StatelessWidget {
+class HomeSoldSection extends StatelessWidget {
   final VoidCallback onSeeAllTap;
 
-  const HomeProductsSection({super.key, required this.onSeeAllTap});
+  const HomeSoldSection({super.key, required this.onSeeAllTap});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class HomeProductsSection extends StatelessWidget {
         Row(
           children: [
             const Text(
-              'Nouveautes',
+              'Soldes',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -71,12 +71,14 @@ class HomeProductsSection extends StatelessWidget {
             }
 
             final allProducts = produitProvider.produits;
-            if (allProducts.isEmpty) {
+            final soldProducts = allProducts.where(hasPromotionPrice).toList();
+
+            if (soldProducts.isEmpty) {
               return const SizedBox(
                 height: 120,
                 child: Center(
                   child: Text(
-                    'Aucun produit disponible pour le moment.',
+                    'Aucun produit en soldes pour le moment.',
                     style: TextStyle(
                       color: AppColors.text,
                       fontWeight: FontWeight.w500,
@@ -86,26 +88,9 @@ class HomeProductsSection extends StatelessWidget {
               );
             }
 
-            final prioritized = allProducts.where(isNewTag).toList();
-
-            final List<ProduitModel> productsToShow = <ProduitModel>[];
-            final seen = <String>{};
-
-            for (final product in prioritized) {
-              if (seen.add(product.uid)) {
-                productsToShow.add(product);
-              }
-              if (productsToShow.length == 4) break;
-            }
-
-            if (productsToShow.length < 4) {
-              for (final product in allProducts) {
-                if (seen.add(product.uid)) {
-                  productsToShow.add(product);
-                }
-                if (productsToShow.length == 4) break;
-              }
-            }
+            final List<ProduitModel> productsToShow = soldProducts
+                .take(4)
+                .toList();
 
             final int visibleCount = math.min(4, productsToShow.length);
 
@@ -120,46 +105,42 @@ class HomeProductsSection extends StatelessWidget {
               });
             }
 
-            return GridView.builder(
-              itemCount: visibleCount,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.62,
-              ),
-              itemBuilder: (context, index) {
-                final produit = productsToShow[index];
-                final imageUrl = produit.images.isNotEmpty
-                    ? produit.images.first
-                    : '';
-                final price = produit.prixPromo > 0
-                    ? produit.prixPromo
-                    : produit.prix;
-                final isFavorite = currentUserId != null
-                    ? likeProvider.isProductLiked(produit.uid)
-                    : false;
+            return SizedBox(
+              height: 250,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: visibleCount,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final produit = productsToShow[index];
+                  final imageUrl = produit.images.isNotEmpty
+                      ? produit.images.first
+                      : '';
+                  final isFavorite = currentUserId != null
+                      ? likeProvider.isProductLiked(produit.uid)
+                      : false;
 
-                return ProductCard(
-                  title: produit.titre,
-                  imageUrl: imageUrl,
-                  price: price,
-                  reviewCount: likeProvider.likesCountForProduct(produit.uid),
-                  badgeText: badgeTextFromTag(produit),
-                  isFavorite: isFavorite,
-                  onTap: () {},
-                  onFavoriteTap: currentUserId == null
-                      ? null
-                      : () => context.read<LikeProvider>().toggleLikeForProduct(
-                          userId: currentUserId,
-                          productId: produit.uid,
-                        ),
-                  onAddToCartTap: () {},
-                  width: double.infinity,
-                );
-              },
+                  return ProductCard(
+                    title: produit.titre,
+                    imageUrl: imageUrl,
+                    price: produit.prixPromo,
+                    oldPrice: produit.prix,
+                    reviewCount: likeProvider.likesCountForProduct(produit.uid),
+                    badgeText: 'Soldes',
+                    isFavorite: isFavorite,
+                    onTap: () {},
+                    onFavoriteTap: currentUserId == null
+                        ? null
+                        : () =>
+                              context.read<LikeProvider>().toggleLikeForProduct(
+                                userId: currentUserId,
+                                productId: produit.uid,
+                              ),
+                    onAddToCartTap: () {},
+                    width: 160,
+                  );
+                },
+              ),
             );
           },
         ),
