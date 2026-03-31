@@ -1,8 +1,8 @@
 import "package:flutter/material.dart";
 import 'package:librairiepro/Config/app_colors.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import "../widgets/TextFieldUi.dart";
+import '../../../providers/auth_provider.dart';
+import "../../widgets/TextFieldUi.dart";
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

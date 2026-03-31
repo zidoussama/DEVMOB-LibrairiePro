@@ -4,8 +4,8 @@ import '../../Config/app_colors.dart';
 class ProductCard extends StatelessWidget {
   final String title;
   final String imageUrl; // can be network url; if empty -> placeholder
+  final double? width;
   final double price;
-  final double rating; // 0..5
   final int reviewCount;
 
   final String? badgeText; // e.g. "Nouveau"
@@ -19,8 +19,8 @@ class ProductCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.imageUrl,
+    this.width,
     required this.price,
-    this.rating = 0,
     this.reviewCount = 0,
     this.badgeText,
     this.isFavorite = false,
@@ -31,12 +31,12 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 170,
+        width: width ?? 170,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -56,24 +56,12 @@ class ProductCard extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: AspectRatio(
                     aspectRatio: 1.2,
-                    child: imageUrl.isEmpty
-                        ? Container(
-                            color: AppColors.background,
-                            child: const Icon(Icons.image_outlined, size: 40),
-                          )
-                        : Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: AppColors.background,
-                              child:
-                                  const Icon(Icons.broken_image_outlined, size: 40),
-                            ),
-                          ),
+                    child: _ProductImage(url: imageUrl),
                   ),
                 ),
 
@@ -128,75 +116,63 @@ class ProductCard extends StatelessWidget {
             ),
 
             // Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.2,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.2,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
+                    const Spacer(),
 
-                  // Rating
-                  if (rating > 0)
+                    // Price + Cart
                     Row(
                       children: [
-                        _Stars(rating: rating, color: const Color(0xFFFFB300)),
-                        const SizedBox(width: 6),
-                        Text(
-                          '($reviewCount)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.text.withOpacity(0.6),
+                        Expanded(
+                          child: Text(
+                            '${price.toStringAsFixed(2)} €',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkResponse(
+                          onTap: onAddToCartTap,
+                          radius: 22,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 18,
+                              color: AppColors.surface,
+                            ),
                           ),
                         ),
                       ],
                     ),
-
-                  const SizedBox(height: 10),
-
-                  // Price + Cart
-                  Row(
-                    children: [
-                      Text(
-                        '${price.toStringAsFixed(2)} €',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.text,
-                        ),
-                      ),
-                      const Spacer(),
-                      InkResponse(
-                        onTap: onAddToCartTap,
-                        radius: 22,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.shopping_cart_outlined,
-                            size: 18,
-                            color: AppColors.surface,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -206,24 +182,80 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-class _Stars extends StatelessWidget {
-  final double rating;
-  final Color color;
+class _ProductImage extends StatefulWidget {
+  final String url;
 
-  const _Stars({required this.rating, required this.color});
+  const _ProductImage({required this.url});
+
+  @override
+  State<_ProductImage> createState() => _ProductImageState();
+}
+
+class _ProductImageState extends State<_ProductImage> {
+  late final List<String> _candidates;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _candidates = _buildCandidates(widget.url);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // simple (not half-stars): 0..5
-    final full = rating.clamp(0, 5).floor();
-    return Row(
-      children: List.generate(5, (i) {
-        return Icon(
-          i < full ? Icons.star : Icons.star_border,
-          size: 14,
-          color: color,
-        );
-      }),
+    if (_candidates.isEmpty) {
+      return _placeholder();
+    }
+
+    return Image.network(
+      _candidates[_currentIndex],
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return _placeholder();
+      },
+      errorBuilder: (_, __, ___) {
+        if (_currentIndex < _candidates.length - 1) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() {
+              _currentIndex += 1;
+            });
+          });
+          return _placeholder();
+        }
+        return _brokenPlaceholder();
+      },
+    );
+  }
+
+  List<String> _buildCandidates(String rawUrl) {
+    final clean = rawUrl.trim();
+    if (clean.isEmpty) return [];
+
+    final encoded = Uri.encodeFull(clean);
+    final lower = encoded.toLowerCase();
+
+    final withoutQuery = lower.split('?').first;
+    if (withoutQuery.endsWith('.jpgg')) {
+      final fixed = encoded.replaceFirst(RegExp(r'\.jpgg(?=\?|$)', caseSensitive: false), '.jpg');
+      return [encoded, fixed];
+    }
+
+    return [encoded];
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: AppColors.background,
+      child: const Icon(Icons.image_outlined, size: 40),
+    );
+  }
+
+  Widget _brokenPlaceholder() {
+    return Container(
+      color: AppColors.background,
+      child: const Icon(Icons.broken_image_outlined, size: 40),
     );
   }
 }

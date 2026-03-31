@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../views/screens/login_screen.dart';
-import '../views/screens/register_screen.dart';
+import '../views/screens/auth/login_screen.dart';
+import '../views/screens/auth/register_screen.dart';
 import '../views/screens/main_page.dart';
 
 class AppRoutes {

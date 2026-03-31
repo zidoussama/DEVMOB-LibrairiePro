@@ -7,6 +7,7 @@ class ProduitModel {
   final String editeur;
   final double prix;
   final double prixPromo;
+  final String tag;
   final int stock;
   final List<String> images;
   final String description;
@@ -19,6 +20,7 @@ class ProduitModel {
     required this.editeur,
     required this.prix,
     required this.prixPromo,
+    required this.tag,
     required this.stock,
     required this.images,
     required this.description,
@@ -36,8 +38,9 @@ class ProduitModel {
       editeur: data['editeur'] ?? '',
       prix: (data['prix'] ?? 0).toDouble(),
       prixPromo: (data['prixPromo'] ?? 0).toDouble(),
+      tag: (data['tag'] ?? ''),
       stock: (data['stock'] ?? 0).toInt(),
-      images: List<String>.from(data['images'] ?? []),
+      images: _extractImages(data),
 
       description: data['description'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -51,18 +54,18 @@ class ProduitModel {
       titre: map['titre'] ?? '',
       auteur: map['auteur'] ?? '',
       editeur: map['editeur'] ?? '',
-
+      tag: map['tag'] ?? '',
       prix: (map['prix'] ?? 0).toDouble(),
       prixPromo: (map['prixPromo'] ?? 0).toDouble(),
       stock: (map['stock'] ?? 0).toInt(),
 
-      images: List<String>.from(map['images'] ?? []),
+      images: _extractImages(map),
       description: map['description'] ?? '',
 
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
-              DateTime.now(),
+                DateTime.now(),
     );
   }
 
@@ -75,6 +78,7 @@ class ProduitModel {
       'editeur': editeur,
       'prix': prix,
       'prixPromo': prixPromo,
+      'tag': tag,
       'stock': stock,
       'images': images,
       'description': description,
@@ -90,6 +94,7 @@ class ProduitModel {
     String? editeur,
     double? prix,
     double? prixPromo,
+    String? tag,
     int? stock,
     List<String>? images,
     String? description,
@@ -102,11 +107,33 @@ class ProduitModel {
       editeur: editeur ?? this.editeur,
       prix: prix ?? this.prix,
       prixPromo: prixPromo ?? this.prixPromo,
+      tag: tag ?? this.tag,
       stock: stock ?? this.stock,
       images: images ?? this.images,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  static List<String> _extractImages(Map<String, dynamic> data) {
+    final dynamic rawImages = data['images'];
+
+    if (rawImages is List) {
+      return rawImages
+          .map((item) => item.toString().trim())
+          .where((url) => url.isNotEmpty)
+          .toList();
+    }
+
+    final String singleUrl = (data['imageUrl'] ?? data['image'] ?? '')
+        .toString()
+        .trim();
+
+    if (singleUrl.isNotEmpty) {
+      return [singleUrl];
+    }
+
+    return [];
   }
 
   // 🔹 DEBUG
@@ -120,6 +147,7 @@ ProduitModel(
   editeur: $editeur,
   prix: $prix,
   prixPromo: $prixPromo,
+  tag: $tag,
   stock: $stock,
   images: $images,
   description: $description,
