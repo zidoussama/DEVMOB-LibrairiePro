@@ -16,6 +16,7 @@ class LikeProvider with ChangeNotifier {
 
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get likedProductsCount => _likedProductIds.length;
 
   bool isProductLiked(String productId) => _likedProductIds.contains(productId);
 

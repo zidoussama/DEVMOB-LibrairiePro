@@ -3,6 +3,7 @@ import '../widgets/app_bottom_nav_bar.dart';
 import 'product/home_screen.dart';
 import 'shoppingcart.dart';
 import 'favorite/favo_screen.dart';
+import 'Profile/Account_menu.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -19,7 +20,7 @@ class _MainPageState extends State<MainPage> {
     Center(child: Text("Recherche")),
     ShoppingCartPage(),
     FavoScreen(),
-    Center(child: Text("Compte")),
+    AccountMenu(),
   ];
 
   @override
