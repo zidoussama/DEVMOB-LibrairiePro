@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:librairiepro/Models/CategorieModel.dart';
 
 class ProduitModel {
   final String uid;
@@ -9,6 +10,7 @@ class ProduitModel {
   final double prixPromo;
   final String tag;
   final int stock;
+  final Categoriemodel? categorie;
   final List<String> images;
   final String description;
   final DateTime createdAt;
@@ -22,6 +24,7 @@ class ProduitModel {
     required this.prixPromo,
     required this.tag,
     required this.stock,
+    this.categorie,
     required this.images,
     required this.description,
     DateTime? createdAt,
@@ -40,6 +43,7 @@ class ProduitModel {
       prixPromo: (data['prixPromo'] ?? 0).toDouble(),
       tag: (data['tag'] ?? ''),
       stock: (data['stock'] ?? 0).toInt(),
+      categorie: _extractCategorie(data),
       images: _extractImages(data),
 
       description: data['description'] ?? '',
@@ -58,6 +62,7 @@ class ProduitModel {
       prix: (map['prix'] ?? 0).toDouble(),
       prixPromo: (map['prixPromo'] ?? 0).toDouble(),
       stock: (map['stock'] ?? 0).toInt(),
+      categorie: _extractCategorie(map),
 
       images: _extractImages(map),
       description: map['description'] ?? '',
@@ -80,6 +85,7 @@ class ProduitModel {
       'prixPromo': prixPromo,
       'tag': tag,
       'stock': stock,
+      'categorie': categorie?.toMap(),
       'images': images,
       'description': description,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -96,6 +102,7 @@ class ProduitModel {
     double? prixPromo,
     String? tag,
     int? stock,
+    Categoriemodel? categorie,
     List<String>? images,
     String? description,
     DateTime? createdAt,
@@ -109,6 +116,7 @@ class ProduitModel {
       prixPromo: prixPromo ?? this.prixPromo,
       tag: tag ?? this.tag,
       stock: stock ?? this.stock,
+      categorie: categorie ?? this.categorie,
       images: images ?? this.images,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
@@ -136,6 +144,29 @@ class ProduitModel {
     return [];
   }
 
+  static Categoriemodel? _extractCategorie(Map<String, dynamic> data) {
+    final dynamic raw = data['categorie'] ?? data['category'];
+
+    if (raw is Map<String, dynamic>) {
+      final cat = Categoriemodel.fromMap(raw);
+      if (cat.id.isNotEmpty || cat.name.isNotEmpty) return cat;
+    }
+
+    if (raw is Map) {
+      final cat = Categoriemodel.fromMap(
+        raw.map((key, value) => MapEntry(key.toString(), value)),
+      );
+      if (cat.id.isNotEmpty || cat.name.isNotEmpty) return cat;
+    }
+
+    final id = (data['categorieId'] ?? data['categoryId'] ?? '').toString();
+    final name = (data['categorieName'] ?? data['categoryName'] ?? '').toString();
+
+    if (id.isEmpty && name.isEmpty) return null;
+
+    return Categoriemodel(id: id, name: name);
+  }
+
   // 🔹 DEBUG
   @override
   String toString() {
@@ -149,6 +180,7 @@ ProduitModel(
   prixPromo: $prixPromo,
   tag: $tag,
   stock: $stock,
+  categorie: ${categorie?.name.isNotEmpty == true ? categorie!.name : categorie?.id},
   images: $images,
   description: $description,
   createdAt: $createdAt

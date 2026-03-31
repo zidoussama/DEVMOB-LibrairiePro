@@ -81,13 +81,7 @@ class _AccountMenuState extends State<AccountMenu> {
                       title: 'Historique des commandes',
                       onTap: () {},
                     ),
-                    const SizedBox(height: 12),
-                    _MenuItem(
-                      icon: Icons.settings_outlined,
-                      title: 'Paramètres',
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
 
                     // Stats
                     _StatsSection(),
