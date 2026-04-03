@@ -7,6 +7,7 @@ import '../../../Models/product.dart';
 import '../../../providers/Like_Provider.dart';
 import '../../../providers/produit_provider.dart';
 import '../../widgets/home/product_tag_utils.dart';
+import '../product/Product_details_screen.dart';
 import '../../widgets/product_card.dart';
 
 class FavoScreen extends StatefulWidget {
@@ -155,7 +156,25 @@ class _FavoScreenState extends State<FavoScreen> {
                           reviewCount: likeProvider.likesCountForProduct(
                             produit.uid,
                           ),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProductDetailsScreen(
+                                  product: produit,
+                                  isFavorite: true,
+                                  onFavoriteTap: () {
+                                    context
+                                        .read<LikeProvider>()
+                                        .toggleLikeForProduct(
+                                          userId: currentUserId,
+                                          productId: produit.uid,
+                                        );
+                                  },
+                                  onAddToCartTap: () {},
+                                ),
+                              ),
+                            );
+                          },
                           onAddToCartTap: () {},
                           onFavoriteTap: () {
                             context.read<LikeProvider>().toggleLikeForProduct(

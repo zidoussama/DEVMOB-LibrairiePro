@@ -8,6 +8,7 @@ import '../../../Models/product.dart';
 import '../../../Config/app_colors.dart';
 import '../../../providers/Like_Provider.dart';
 import '../../../providers/produit_provider.dart';
+import '../../screens/product/Product_details_screen.dart';
 import '../product_card.dart';
 import 'product_tag_utils.dart';
 
@@ -128,7 +129,25 @@ class HomeSoldSection extends StatelessWidget {
                     reviewCount: likeProvider.likesCountForProduct(produit.uid),
                     badgeText: 'Soldes',
                     isFavorite: isFavorite,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailsScreen(
+                            product: produit,
+                            isFavorite: isFavorite,
+                            onFavoriteTap: currentUserId == null
+                                ? null
+                                : () => context
+                                    .read<LikeProvider>()
+                                    .toggleLikeForProduct(
+                                      userId: currentUserId,
+                                      productId: produit.uid,
+                                    ),
+                            onAddToCartTap: () {},
+                          ),
+                        ),
+                      );
+                    },
                     onFavoriteTap: currentUserId == null
                         ? null
                         : () =>
