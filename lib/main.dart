@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/adress_provider.dart';
 import 'providers/Like_Provider.dart';
 import 'providers/produit_provider.dart';
 import 'Config/routes.dart';
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AdressProvider()),
         ChangeNotifierProvider(create: (_) => ProduitProvider()),
         ChangeNotifierProvider(create: (_) => LikeProvider()),
       ],

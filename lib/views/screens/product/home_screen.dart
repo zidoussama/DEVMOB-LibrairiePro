@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/produit_provider.dart';
+import '../../../../providers/auth_provider.dart';
 import '../../../../Config/app_colors.dart';
 import '../../widgets/home/home_header.dart';
 import '../../widgets/home/home_products_section.dart';
@@ -21,12 +22,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProduitProvider>().listenProduits();
+      context.read<AuthProvider>().loadCurrentUser();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     const bg = AppColors.background;
+    final user = context.watch<AuthProvider>().currentUser;
+    final firstName = user?.firstName.trim();
+    final greetingName = (firstName != null && firstName.isNotEmpty)
+        ? firstName
+        : 'Utilisateur';
 
     return Scaffold(
       backgroundColor: bg,
@@ -38,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               HomeHeader(
                 title: 'LibrairiePro',
-                greeting: 'Bonjour, Marie 👋',
+                greeting: 'Bonjour, $greetingName 👋',
                 onNotificationTap: () {},
               ),
               const SizedBox(height: 16),

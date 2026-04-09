@@ -1,8 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../../Config/app_colors.dart';
 import '../../../providers/Like_Provider.dart';
+import '../../../Models/user.dart';
+import 'AdressScreen.dart';
+import 'PersonalInfo_Screen.dart';
 
 class AccountMenu extends StatefulWidget {
   const AccountMenu({super.key});
@@ -36,97 +40,128 @@ class _AccountMenuState extends State<AccountMenu> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final firebaseUser = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: user == null
+        child: firebaseUser == null
             ? const _NotLoggedInWidget()
-            : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    const Text(
-                      'Mon Compte',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.text,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+            : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(firebaseUser.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  UserModel? liveUser;
+                  final data = snapshot.data?.data();
+                  if (data != null) {
+                    liveUser = UserModel.fromMap({
+                      ...data,
+                      'uid': firebaseUser.uid,
+                    });
+                  }
 
-                    // Profile card
-                    _ProfileCard(user: user),
-                    const SizedBox(height: 24),
-
-                    // Menu items
-                    _MenuItem(
-                      icon: Icons.person_outline,
-                      title: 'Informations personnelles',
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    _MenuItem(
-                      icon: Icons.location_on_outlined,
-                      title: 'Adresses sauvegardées',
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    _MenuItem(
-                      icon: Icons.local_shipping_outlined,
-                      title: 'Historique des commandes',
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Stats
-                    _StatsSection(),
-                    const SizedBox(height: 28),
-
-                    // Logout button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoggingOut ? null : _handleLogout,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE8B4B8),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        const Text(
+                          'Mon Compte',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.text,
                           ),
                         ),
-                        child: _isLoggingOut
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.logout, color: Colors.redAccent),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Déconnexion',
-                                    style: TextStyle(
-                                      color: Colors.redAccent,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                        const SizedBox(height: 20),
+
+                        // Profile card
+                        _ProfileCard(user: liveUser, fallbackUser: firebaseUser),
+                        const SizedBox(height: 24),
+
+                        // Menu items
+                        _MenuItem(
+                          icon: Icons.person_outline,
+                          title: 'Informations personnelles',
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PersonalInfoScreen(),
                               ),
-                      ),
+                            );
+                            if (!mounted) return;
+                            setState(() {});
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _MenuItem(
+                          icon: Icons.location_on_outlined,
+                          title: 'Adresses sauvegardées',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AdressScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _MenuItem(
+                          icon: Icons.local_shipping_outlined,
+                          title: 'Historique des commandes',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Stats
+                        _StatsSection(),
+                        const SizedBox(height: 28),
+
+                        // Logout button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoggingOut ? null : _handleLogout,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE8B4B8),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isLoggingOut
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.logout, color: Colors.redAccent),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Déconnexion',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
+                  );
+                },
               ),
       ),
     );
@@ -134,15 +169,18 @@ class _AccountMenuState extends State<AccountMenu> {
 }
 
 class _ProfileCard extends StatelessWidget {
-  final User user;
+  final UserModel? user;
+  final User fallbackUser;
 
-  const _ProfileCard({required this.user});
+  const _ProfileCard({required this.user, required this.fallbackUser});
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user.displayName ?? 'Utilisateur';
-    final email = user.email ?? 'email@example.com';
-    final phoneNumber = user.phoneNumber ?? '+33 6 12 34 56 78';
+    final displayName = user?.fullName.trim().isNotEmpty == true
+        ? user!.fullName
+        : (fallbackUser.displayName ?? 'Utilisateur');
+    final email = (user?.email ?? fallbackUser.email ?? 'email@example.com').trim();
+    final phoneNumber = (user?.phoneNumber ?? fallbackUser.phoneNumber ?? '').trim();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -237,11 +275,15 @@ class _ProfileCard extends StatelessWidget {
                 color: Colors.white70,
               ),
               const SizedBox(width: 12),
-              Text(
-                phoneNumber,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
+              Expanded(
+                child: Text(
+                  phoneNumber.isEmpty ? 'Non renseigne' : phoneNumber,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
