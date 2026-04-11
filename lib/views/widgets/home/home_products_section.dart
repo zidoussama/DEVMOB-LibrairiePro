@@ -4,8 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../Models/cart.dart';
 import '../../../Models/product.dart';
 import '../../../Config/app_colors.dart';
+import '../../../providers/cart_provider.dart';
 import '../../../providers/Like_Provider.dart';
 import '../../../providers/produit_provider.dart';
 import '../../screens/product/Product_details_screen.dart';
@@ -16,6 +18,38 @@ class HomeProductsSection extends StatelessWidget {
   final VoidCallback onSeeAllTap;
 
   const HomeProductsSection({super.key, required this.onSeeAllTap});
+
+  Future<void> _addProductToCart(
+    BuildContext context,
+    ProduitModel produit, {
+    int quantity = 1,
+  }) async {
+    final cartProvider = context.read<CartProvider>();
+    final unitPrice = produit.prixPromo > 0 ? produit.prixPromo : produit.prix;
+
+    final cart = CartModel(
+      id: '${produit.uid}_${DateTime.now().millisecondsSinceEpoch}',
+      product: produit,
+      price: unitPrice,
+      quantity: quantity,
+      totalPrice: unitPrice * quantity,
+    );
+
+    final success = await cartProvider.addToCart(cart);
+    if (!context.mounted) return;
+
+    final label = quantity > 1 ? 'articles' : 'article';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? '$quantity $label ajoute au panier'
+              : (cartProvider.errorMessage ?? 'Erreur lors de l ajout au panier'),
+        ),
+        backgroundColor: success ? AppColors.secondary : Colors.redAccent,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +198,11 @@ class HomeProductsSection extends StatelessWidget {
                                     userId: currentUserId,
                                     productId: produit.uid,
                                   ),
-                          onAddToCartTap: () {},
+                          onAddToCartTap: (selectedQuantity) => _addProductToCart(
+                            context,
+                            produit,
+                            quantity: selectedQuantity,
+                          ),
                         ),
                       ),
                     );
@@ -175,7 +213,7 @@ class HomeProductsSection extends StatelessWidget {
                           userId: currentUserId,
                           productId: produit.uid,
                         ),
-                  onAddToCartTap: () {},
+                  onAddToCartTap: () => _addProductToCart(context, produit),
                   width: double.infinity,
                 );
               },

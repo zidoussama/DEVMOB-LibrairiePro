@@ -10,7 +10,7 @@ class ProductDetailsScreen extends StatefulWidget {
 	final ProduitModel product;
 	final bool isFavorite;
 	final VoidCallback? onFavoriteTap;
-	final VoidCallback? onAddToCartTap;
+	final ValueChanged<int>? onAddToCartTap;
 
 	const ProductDetailsScreen({
 		super.key,
@@ -117,7 +117,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 											reference: product.uid,
 											onAddToCartTap: product.stock <= 0
 													? null
-													: widget.onAddToCartTap,
+															: () => widget.onAddToCartTap?.call(_quantity),
 										),
 									],
 								),

@@ -170,7 +170,7 @@ class _FavoScreenState extends State<FavoScreen> {
                                           productId: produit.uid,
                                         );
                                   },
-                                  onAddToCartTap: () {},
+                                  onAddToCartTap: (_) {},
                                 ),
                               ),
                             );
