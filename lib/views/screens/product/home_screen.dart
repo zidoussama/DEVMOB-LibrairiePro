@@ -10,13 +10,17 @@ import '../../widgets/home/home_search_bar.dart';
 import '../../widgets/home/home_sold_section.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final ValueChanged<String>? onSearchSubmitted;
+
+  const HomeScreen({super.key, this.onSearchSubmitted});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<ProduitProvider>().listenProduits();
       context.read<AuthProvider>().loadCurrentUser();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -52,8 +62,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
               HomeSearchBar(
                 hintText: 'Rechercher un livre...',
+                controller: _searchController,
                 onTap: () {},
                 onChanged: (_) {},
+                onSubmitted: (value) {
+                  widget.onSearchSubmitted?.call(value.trim());
+                },
               ),
               const SizedBox(height: 18),
 

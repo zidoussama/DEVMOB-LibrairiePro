@@ -5,19 +5,29 @@ class HomeSearchBar extends StatelessWidget {
   final String hintText;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final TextEditingController? controller;
+  final bool readOnly;
 
   const HomeSearchBar({
     super.key,
     required this.hintText,
     this.onTap,
     this.onChanged,
+    this.onSubmitted,
+    this.controller,
+    this.readOnly = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
+      readOnly: readOnly,
       onTap: onTap,
       onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(
