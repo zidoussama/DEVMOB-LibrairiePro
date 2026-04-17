@@ -18,6 +18,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMeChoice();
+  }
+
+  Future<void> _loadRememberMeChoice() async {
+    final rememberMe =
+        await context.read<AuthProvider>().getRememberMeChoice();
+    if (!mounted) return;
+
+    setState(() {
+      _rememberMe = rememberMe;
+    });
+  }
 
   @override
   void dispose() {
@@ -56,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final success = await authProvider.signIn(
         email: email,
         password: password,
+        rememberMe: _rememberMe,
       );
 
       if (!mounted) return;
@@ -364,6 +382,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              activeColor: const Color(0xFF6D4C41),
+                              onChanged: (value) {
+                                setState(() {
+                                  _rememberMe = value ?? false;
+                                });
+                              },
+                            ),
+                            const Text(
+                              "Remember me",
+                              style: TextStyle(
+                                color: Color(0xFF5D4037),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
 
                         Align(
                           alignment: Alignment.centerRight,

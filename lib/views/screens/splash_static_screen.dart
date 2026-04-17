@@ -1,43 +1,28 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../Config/app_colors.dart';
 import '../../Config/routes.dart';
-import '../../providers/auth_provider.dart' as app_auth;
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+class SplashStaticScreen extends StatefulWidget {
+  const SplashStaticScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<SplashStaticScreen> createState() => _SplashStaticScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashStaticScreenState extends State<SplashStaticScreen> {
   @override
   void initState() {
     super.initState();
-    _goNext();
+    _goToLoadingSplash();
   }
 
-  Future<void> _goNext() async {
+  Future<void> _goToLoadingSplash() async {
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
-
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    final shouldKeepLoggedIn =
-        await context.read<app_auth.AuthProvider>().shouldKeepLoggedIn();
-
-    if (firebaseUser != null && !shouldKeepLoggedIn) {
-      await context.read<app_auth.AuthProvider>().signOut();
-    }
-
-    final nextRoute =
-        (firebaseUser != null && shouldKeepLoggedIn) ? AppRoutes.main : AppRoutes.login;
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(nextRoute);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.splash);
   }
 
   @override
@@ -120,14 +105,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: AppColors.primary.withOpacity(0.9),
-                    ),
-                  ),
+                  const SizedBox(width: 36, height: 36),
                 ],
               ),
             ),

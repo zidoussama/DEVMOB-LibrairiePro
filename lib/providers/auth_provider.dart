@@ -1,8 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Models/user.dart';
 import '../controllers/auth_controller.dart';
 
 class AuthProvider extends ChangeNotifier {
+  static const String _rememberMeKey = 'remember_me';
+  static const String _keepLoggedInKey = 'keep_logged_in';
+
   final AuthController _controller;
 
   AuthProvider({AuthController? controller})
@@ -29,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signIn({
     required String email,
     required String password,
+    required bool rememberMe,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -42,6 +47,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _currentUser = user;
+      await _saveRememberMeChoice(rememberMe);
       _setLoading(false);
       return true;
     } catch (e) {
@@ -105,6 +111,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       await _controller.signOut();
+      await _saveRememberMeChoice(false);
       _currentUser = null;
     } catch (e) {
       _setError(e.toString().replaceFirst('Exception: ', ''));
@@ -124,5 +131,21 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  Future<bool> shouldKeepLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keepLoggedInKey) ?? false;
+  }
+
+  Future<bool> getRememberMeChoice() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_rememberMeKey) ?? false;
+  }
+
+  Future<void> _saveRememberMeChoice(bool rememberMe) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, rememberMe);
+    await prefs.setBool(_keepLoggedInKey, rememberMe);
   }
 }
