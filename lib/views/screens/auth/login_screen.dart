@@ -4,6 +4,10 @@ import '../../../Config/routes.dart';
 import '../../../providers/auth_provider.dart';
 import '../../widgets/TextFieldUi.dart';
 
+// ─────────────────────────────────────────────
+// LOGIN SCREEN
+// ─────────────────────────────────────────────
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,7 +17,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -30,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final rememberMe =
         await context.read<AuthProvider>().getRememberMeChoice();
     if (!mounted) return;
-
     setState(() {
       _rememberMe = rememberMe;
     });
@@ -91,197 +93,36 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Shows the forgot-password dialog.
+  /// Returns:
+  ///   true  → reset email sent successfully
+  ///   false → API call failed
+  ///   null  → user cancelled
   Future<void> _showResetPasswordDialog() async {
-    final emailCtrl = TextEditingController(text: _emailController.text.trim());
-    final dialogKey = GlobalKey<FormState>();
-
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (dialogContext) {
-        bool isSubmitting = false;
-
-        Future<void> submit(StateSetter setStateDialog) async {
-          if (isSubmitting) return;
-
-          final valid = dialogKey.currentState?.validate() ?? false;
-          if (!valid) return;
-
-          setStateDialog(() => isSubmitting = true);
-
-          // Close keyboard first (important on Android)
-          FocusScope.of(dialogContext).unfocus();
-
-          bool ok = false;
-          try {
-            ok = await dialogContext.read<AuthProvider>().resetPassword(
-                  email: emailCtrl.text.trim(),
-                );
-          } catch (_) {
-            ok = false;
-          }
-
-          // Close dialog safely
-          if (Navigator.of(dialogContext).canPop()) {
-            Navigator.of(dialogContext).pop(ok);
-          }
-        }
-
-        return StatefulBuilder(
-          builder: (dialogContext, setStateDialog) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Form(
-                  key: dialogKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Mot de passe oublié ?",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF5D4037),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Entrez votre email pour recevoir un lien de réinitialisation.",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[700],
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      TextFormField(
-                        controller: emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: "votre@email.com",
-                          prefixIcon: const Icon(
-                            Icons.email_outlined,
-                            color: Color(0xFF8D6E63),
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF5F5F0),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Colors.black12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Colors.black12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: Colors.black26),
-                          ),
-                        ),
-                        validator: (v) {
-                          final value = (v ?? "").trim();
-                          if (value.isEmpty) return "Email requis";
-                          if (!value.contains("@")) return "Email invalide";
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: isSubmitting
-                                  ? null
-                                  : () {
-                                      FocusScope.of(dialogContext).unfocus();
-                                      Navigator.of(dialogContext).pop(false);
-                                    },
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF6D4C41),
-                                side: const BorderSide(
-                                  color: Color(0xFF6D4C41),
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                "Annuler",
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isSubmitting
-                                  ? null
-                                  : () => submit(setStateDialog),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6D4C41),
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: isSubmitting
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      "Envoyer",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (_) => _ForgotPasswordDialog(
+        initialEmail: _emailController.text.trim(),
+      ),
     );
-
-    emailCtrl.dispose();
 
     if (!mounted) return;
 
     if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email de réinitialisation envoyé."),
-        ),
+        const SnackBar(content: Text("Email de réinitialisation envoyé.")),
       );
     } else if (result == false) {
+      // result == false means the API call failed (not cancelled)
       final errorMessage = context.read<AuthProvider>().errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage ?? "Impossible d'envoyer l'email")),
+        SnackBar(
+          content: Text(errorMessage ?? "Impossible d'envoyer l'email"),
+        ),
       );
     }
+    // result == null → cancelled, do nothing
   }
 
   @override
@@ -297,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo
+                // ── Logo ──────────────────────────────────────
                 Container(
                   width: 80,
                   height: 80,
@@ -325,14 +166,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Text(
                   "Connectez-vous à votre compte",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 32),
 
-                // Carte Login
+                // ── Login card ────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -360,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Mot de passe
+                        // Password
                         TextFieldUI(
                           controller: _passwordController,
                           label: "Mot de passe",
@@ -383,6 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
+                        // Remember me
                         Row(
                           children: [
                             Checkbox(
@@ -404,6 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
 
+                        // Forgot password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -422,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Bouton
+                        // Login button
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -460,16 +300,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Register
+                // ── Register link ─────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       "Pas encore de compte ?",
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     TextButton(
                       onPressed: () {
@@ -490,6 +327,203 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// FORGOT PASSWORD DIALOG  (self-contained widget)
+// ─────────────────────────────────────────────
+//
+// FIX: The controller now lives inside this widget's State and is
+// disposed by Flutter at the correct moment (after the close animation),
+// instead of being disposed manually in the parent right after pop(),
+// which caused the "_dependents.isEmpty" crash.
+
+class _ForgotPasswordDialog extends StatefulWidget {
+  final String initialEmail;
+
+  const _ForgotPasswordDialog({required this.initialEmail});
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  late final TextEditingController _emailCtrl;
+  final _dialogKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailCtrl = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void dispose() {
+    // ✅ Disposed safely AFTER the dialog's close animation completes,
+    //    so no widget still references this controller.
+    _emailCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    if (!(_dialogKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isSubmitting = true);
+    FocusScope.of(context).unfocus();
+
+    bool ok = false;
+    try {
+      ok = await context.read<AuthProvider>().resetPassword(
+            email: _emailCtrl.text.trim(),
+          );
+    } catch (_) {
+      ok = false;
+    }
+
+    if (!mounted) return; // ✅ Guard after every async gap
+    Navigator.of(context).pop(ok); // true = success, false = API error
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Form(
+          key: _dialogKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Title ──────────────────────────────────────
+              const Text(
+                "Mot de passe oublié ?",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF5D4037),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Entrez votre email pour recevoir un lien de réinitialisation.",
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Email field ────────────────────────────────
+              TextFormField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: "votre@email.com",
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: Color(0xFF8D6E63),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F0),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Colors.black12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Colors.black12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Colors.black26),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Colors.redAccent),
+                  ),
+                ),
+                validator: (v) {
+                  final value = (v ?? "").trim();
+                  if (value.isEmpty) return "Email requis";
+                  if (!value.contains("@")) return "Email invalide";
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // ── Buttons ────────────────────────────────────
+              Row(
+                children: [
+                  // Cancel
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () {
+                              FocusScope.of(context).unfocus();
+                              // ✅ pop(null) = cancelled (not false)
+                              Navigator.of(context).pop(null);
+                            },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF6D4C41),
+                        side: const BorderSide(color: Color(0xFF6D4C41)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Annuler",
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // Submit
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6D4C41),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              "Envoyer",
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
