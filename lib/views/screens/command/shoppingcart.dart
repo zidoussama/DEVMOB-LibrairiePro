@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:librairiepro/Config/app_colors.dart';
 import 'package:librairiepro/providers/cart_provider.dart';
 import 'package:librairiepro/providers/adress_provider.dart';
 import 'package:librairiepro/Models/cart.dart';
+import 'package:librairiepro/services/payment_service.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -15,6 +17,112 @@ class ShoppingCartPage extends StatefulWidget {
 
 class _ShoppingCartPageState extends State<ShoppingCartPage> {
   final double delivery = 5.99;
+  bool _isPaying = false;
+
+  Future<void> _onPayPressed(
+    CartProvider cartProvider,
+    AdressProvider adressProvider,
+  ) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez vous connecter pour payer.')),
+      );
+      return;
+    }
+
+    final carts = cartProvider.carts;
+    if (carts.isEmpty) return;
+
+    setState(() => _isPaying = true);
+
+    try {
+      final launched = await pay();
+      if (!launched) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir la page de paiement.')),
+        );
+        return;
+      }
+
+      await _saveCommandToFirestore(userId, carts, cartProvider, adressProvider);
+      await cartProvider.clearCart();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paiement valide. Commande enregistree.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur pendant le paiement.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPaying = false);
+      }
+    }
+  }
+
+  Future<void> _saveCommandToFirestore(
+    String userId,
+    List<CartModel> carts,
+    CartProvider cartProvider,
+    AdressProvider adressProvider,
+  ) async {
+    final now = Timestamp.now();
+    final subtotal = cartProvider.totalPrice;
+    final total = subtotal + delivery;
+    final defaultAddress = adressProvider.adresses.isNotEmpty
+        ? adressProvider.adresses.firstWhere(
+            (addr) => addr.isDefault,
+            orElse: () => adressProvider.adresses.first,
+          )
+        : null;
+
+    final commandData = <String, dynamic>{
+      'userId': userId,
+      'status': 'paid',
+      'paymentMethod': 'stripe_link',
+      'createdAt': now,
+      'paidAt': now,
+      'subtotal': subtotal,
+      'delivery': delivery,
+      'total': total,
+      'items': carts
+          .map(
+            (cart) => {
+              'cartId': cart.id,
+              'productId': cart.product.uid,
+              'title': cart.product.titre,
+              'author': cart.product.auteur,
+              'image': cart.product.images.isNotEmpty ? cart.product.images.first : null,
+              'quantity': cart.quantity,
+              'unitPrice': cart.price,
+              'lineTotal': cart.totalPrice,
+            },
+          )
+          .toList(),
+      'address': defaultAddress == null
+          ? null
+          : {
+              'id': defaultAddress.id,
+              'street': defaultAddress.street,
+              'city': defaultAddress.city,
+              'postalCode': defaultAddress.postalCode,
+              'country': defaultAddress.country,
+              'isDefault': defaultAddress.isDefault,
+            },
+    };
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('commands')
+        .add(commandData);
+  }
 
   @override
   void initState() {
@@ -226,12 +334,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Handle checkout
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Redirection vers le paiement...")),
-                          );
-                        },
+                        onPressed: _isPaying
+                            ? null
+                            : () => _onPayPressed(cartProvider, adressProvider),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -239,10 +344,19 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: const Text(
-                          "Passer au paiement",
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        child: _isPaying
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                "Passer au paiement",
+                                style: TextStyle(fontSize: 16),
+                              ),
                       ),
                     ),
                 ],
