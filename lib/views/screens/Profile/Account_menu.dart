@@ -7,6 +7,7 @@ import '../../../providers/Like_Provider.dart';
 import '../../../Models/user.dart';
 import 'AdressScreen.dart';
 import 'PersonalInfo_Screen.dart';
+import '../Profile/HistoriqueScreen.dart';
 
 class AccountMenu extends StatefulWidget {
   const AccountMenu({super.key});
@@ -112,7 +113,13 @@ class _AccountMenuState extends State<AccountMenu> {
                         _MenuItem(
                           icon: Icons.local_shipping_outlined,
                           title: 'Historique des commandes',
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const CommandHistoryScreen(),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 20),
 

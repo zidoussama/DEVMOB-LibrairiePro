@@ -6,6 +6,7 @@ import 'providers/adress_provider.dart';
 import 'providers/Like_Provider.dart';
 import 'providers/produit_provider.dart';
 import 'providers/cart_provider.dart';
+import 'providers/command_provider.dart';
 import 'Config/routes.dart';
 import '../../Config/app_colors.dart';
 
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProduitProvider()),
         ChangeNotifierProvider(create: (_) => LikeProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => CommandProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:librairiepro/Config/app_colors.dart';
+import 'package:librairiepro/Models/command.dart';
 import 'package:librairiepro/providers/cart_provider.dart';
 import 'package:librairiepro/providers/adress_provider.dart';
+import 'package:librairiepro/providers/command_provider.dart';
 import 'package:librairiepro/Models/cart.dart';
 import 'package:librairiepro/services/payment_service.dart';
 
@@ -47,7 +48,23 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         return;
       }
 
-      await _saveCommandToFirestore(userId, carts, cartProvider, adressProvider);
+      final saved = await context.read<CommandProvider>().addCommand(
+            userId: userId,
+            command: _buildCommand(userId, carts, cartProvider, adressProvider),
+          );
+
+      if (!saved) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.read<CommandProvider>().error ?? 'Erreur pendant l\'enregistrement de la commande.',
+            ),
+          ),
+        );
+        return;
+      }
+
       await cartProvider.clearCart();
 
       if (!mounted) return;
@@ -66,13 +83,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     }
   }
 
-  Future<void> _saveCommandToFirestore(
+  CommandModel _buildCommand(
     String userId,
     List<CartModel> carts,
     CartProvider cartProvider,
     AdressProvider adressProvider,
-  ) async {
-    final now = Timestamp.now();
+  ) {
+    final now = DateTime.now();
     final subtotal = cartProvider.totalPrice;
     final total = subtotal + delivery;
     final defaultAddress = adressProvider.adresses.isNotEmpty
@@ -82,46 +99,40 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           )
         : null;
 
-    final commandData = <String, dynamic>{
-      'userId': userId,
-      'status': 'paid',
-      'paymentMethod': 'stripe_link',
-      'createdAt': now,
-      'paidAt': now,
-      'subtotal': subtotal,
-      'delivery': delivery,
-      'total': total,
-      'items': carts
+    return CommandModel(
+      userId: userId,
+      status: 'paid',
+      paymentMethod: 'stripe_link',
+      createdAt: now,
+      paidAt: now,
+      subtotal: subtotal,
+      delivery: delivery,
+      total: total,
+      items: carts
           .map(
-            (cart) => {
-              'cartId': cart.id,
-              'productId': cart.product.uid,
-              'title': cart.product.titre,
-              'author': cart.product.auteur,
-              'image': cart.product.images.isNotEmpty ? cart.product.images.first : null,
-              'quantity': cart.quantity,
-              'unitPrice': cart.price,
-              'lineTotal': cart.totalPrice,
-            },
+            (cart) => CommandItemModel(
+              cartId: cart.id,
+              productId: cart.product.uid,
+              title: cart.product.titre,
+              author: cart.product.auteur,
+              image: cart.product.images.isNotEmpty ? cart.product.images.first : '',
+              quantity: cart.quantity,
+              unitPrice: cart.price,
+              lineTotal: cart.totalPrice,
+            ),
           )
           .toList(),
-      'address': defaultAddress == null
+      address: defaultAddress == null
           ? null
-          : {
-              'id': defaultAddress.id,
-              'street': defaultAddress.street,
-              'city': defaultAddress.city,
-              'postalCode': defaultAddress.postalCode,
-              'country': defaultAddress.country,
-              'isDefault': defaultAddress.isDefault,
-            },
-    };
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('commands')
-        .add(commandData);
+          : CommandAddressModel(
+              id: defaultAddress.id,
+              street: defaultAddress.street ?? '',
+              city: defaultAddress.city ?? '',
+              postalCode: defaultAddress.postalCode ?? '',
+              country: defaultAddress.country ?? '',
+              isDefault: defaultAddress.isDefault,
+            ),
+    );
   }
 
   @override
