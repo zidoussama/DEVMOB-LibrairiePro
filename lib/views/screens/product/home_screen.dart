@@ -8,6 +8,7 @@ import '../../widgets/home/home_products_section.dart';
 import '../../widgets/home/home_promo_banner.dart';
 import '../../widgets/home/home_search_bar.dart';
 import '../../widgets/home/home_sold_section.dart';
+import '../../widgets/home/home_categories_section.dart';
 
 class HomeScreen extends StatefulWidget {
   final ValueChanged<String>? onSearchSubmitted;
@@ -78,6 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 22),
 
               HomeProductsSection(onSeeAllTap: () {}),
+                const SizedBox(height: 22),
+
+                HomeCategoriesSection(onCategoryTap: () {}),
             ],
           ),
         ),
