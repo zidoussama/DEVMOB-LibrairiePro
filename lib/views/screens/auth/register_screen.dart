@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import 'package:librairiepro/Config/app_colors.dart';
 import 'package:provider/provider.dart';
+import '../../../Config/routes.dart';
 import '../../../providers/auth_provider.dart';
 import "../../widgets/TextFieldUi.dart";
 
@@ -53,9 +54,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Inscription réussie")),
+          const SnackBar(
+            content: Text("Inscription réussie, vérifiez votre email"),
+          ),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, AppRoutes.verificationWaiting);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(authProvider.errorMessage ?? "Erreur")),
@@ -278,7 +281,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               TextButton(
                                 onPressed: () {
                                   Navigator.pushReplacementNamed(
-                                      context, '/login');
+                                    context,
+                                    AppRoutes.login,
+                                  );
                                 },
                                 child: const Text(
                                   "Se connecter",

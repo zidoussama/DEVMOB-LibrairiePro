@@ -32,4 +32,11 @@ class AuthController {
   Future<UserModel?> getCurrentUser() => _service.getCurrentUser();
 
   Future<void> signOut() => _service.signOut();
+
+  Future<void> sendEmailVerification() => _service.sendEmailVerification();
+
+  Future<bool> reloadAndCheckEmailVerified() =>
+      _service.reloadAndCheckEmailVerified();
+
+  bool isEmailVerified() => _service.isEmailVerified();
 }

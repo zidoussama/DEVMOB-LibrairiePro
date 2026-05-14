@@ -37,6 +37,8 @@ class FirebaseAuthService {
         password: password,
       );
 
+      await credential.user?.sendEmailVerification();
+
       await credential.user!.updateDisplayName("$firstName $lastName");
 
       final userModel = UserModel(
@@ -77,6 +79,26 @@ class FirebaseAuthService {
     await _auth.signOut();
   }
 
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté');
+    }
+    await user.sendEmailVerification();
+  }
+
+  Future<bool> reloadAndCheckEmailVerified() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    await user.reload();
+    return _auth.currentUser?.emailVerified ?? false;
+  }
+
+  bool isEmailVerified() {
+    return _auth.currentUser?.emailVerified ?? false;
+  }
+
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -91,6 +113,10 @@ class FirebaseAuthService {
         return "Email invalide";
       case 'missing-email':
         return "Email requis";
+      case 'too-many-requests':
+        return "Trop de tentatives, réessayez dans quelques minutes";
+      case 'network-request-failed':
+        return "Problème réseau, vérifiez votre connexion";
       default:
         return "Erreur d'authentification";
     }

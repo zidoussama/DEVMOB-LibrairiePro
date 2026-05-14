@@ -84,7 +84,15 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Connexion réussie")),
         );
-        Navigator.pushReplacementNamed(context, AppRoutes.main);
+        final isVerified = authProvider.isEmailVerified();
+        if (!isVerified) {
+          await authProvider.resendEmailVerification();
+          if (!mounted) return;
+        }
+        Navigator.pushReplacementNamed(
+          context,
+          isVerified ? AppRoutes.main : AppRoutes.verificationWaiting,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(authProvider.errorMessage ?? "Erreur")),

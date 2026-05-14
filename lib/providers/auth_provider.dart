@@ -133,6 +133,40 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  bool isEmailVerified() {
+    return _controller.isEmailVerified();
+  }
+
+  Future<bool> refreshAndCheckEmailVerified() async {
+    _setLoading(true);
+    _setError(null);
+
+    try {
+      final isVerified = await _controller.reloadAndCheckEmailVerified();
+      _setLoading(false);
+      return isVerified;
+    } catch (e) {
+      _setError(e.toString().replaceFirst('Exception: ', ''));
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> resendEmailVerification() async {
+    _setLoading(true);
+    _setError(null);
+
+    try {
+      await _controller.sendEmailVerification();
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setError(e.toString().replaceFirst('Exception: ', ''));
+      _setLoading(false);
+      return false;
+    }
+  }
+
   Future<bool> shouldKeepLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_keepLoggedInKey) ?? false;

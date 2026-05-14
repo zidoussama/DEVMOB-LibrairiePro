@@ -25,16 +25,23 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _goNext() async {
     if (!mounted) return;
 
-    final firebaseUser = FirebaseAuth.instance.currentUser;
+    User? firebaseUser = FirebaseAuth.instance.currentUser;
     final shouldKeepLoggedIn =
         await context.read<app_auth.AuthProvider>().shouldKeepLoggedIn();
 
     if (firebaseUser != null && !shouldKeepLoggedIn) {
       await context.read<app_auth.AuthProvider>().signOut();
+      firebaseUser = null;
     }
 
-    final nextRoute =
-        (firebaseUser != null && shouldKeepLoggedIn) ? AppRoutes.main : AppRoutes.login;
+    String nextRoute = AppRoutes.login;
+    if (firebaseUser != null && shouldKeepLoggedIn) {
+      await firebaseUser.reload();
+      firebaseUser = FirebaseAuth.instance.currentUser;
+      nextRoute = (firebaseUser?.emailVerified ?? false)
+          ? AppRoutes.main
+          : AppRoutes.verificationWaiting;
+    }
 
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(nextRoute);
